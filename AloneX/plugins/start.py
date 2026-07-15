@@ -43,7 +43,7 @@ async def start(_, message: types.Message):
     # --- HANDLE /start help ---
     if len(message.command) > 1 and message.command[1] == "help":
         if private:
-            # Sticker Before Image in /start help
+            # Sticker Before Video in /start help
             await message.reply_sticker("CAACAgUAAxkBAAFJgZ1qBGwx9Z9vW5BhG3dw0l1A5j4CyQACXRYAAuc-wVWs4--9DGlDKzsE")
         return await _help(_, message)
 
@@ -55,13 +55,12 @@ async def start(_, message: types.Message):
 
     key = buttons.start_key(message.lang, private)
     
-    # --- SEND IMAGE BELOW TEXT ---
-    await message.reply_photo(
-        photo=config.START_IMG,
+    # --- SEND VIDEO BELOW TEXT ---
+    await message.reply_video(
+        video=config.START_VIDEO,  # Make sure START_VIDEO is defined in your config.py
         caption=_text,
         reply_markup=key,
-        quote=not private,
-        invert_media=True 
+        quote=not private
     )
 
     if private:
