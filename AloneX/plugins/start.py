@@ -5,6 +5,7 @@
 
 import asyncio
 from pyrogram import enums, filters, types
+from pyrogram.errors import MessageNotModified
 
 from AloneX import app, config, db, lang
 from AloneX.helpers import buttons, utils
@@ -103,3 +104,63 @@ async def _new_member(_, message: types.Message):
                 return
             await utils.send_log(message, True)
             await db.add_chat(message.chat.id)
+
+
+# ==========================================
+# 🛠️ EDIT SYSTEM FOR HELP & START BUTTONS 🛠️
+# ==========================================
+
+# Jab koi "Help & Commands" button dabayega, toh start menu edit ho jayega
+@app.on_callback_query(filters.regex("^help$") & ~app.bl_users)
+@lang.language()
+async def help_menu_cb(_, query: types.CallbackQuery):
+    try:
+        await query.message.edit_caption(
+            caption=query.lang["help_menu"],
+            reply_markup=buttons.help_markup(query.lang)
+        )
+    except MessageNotModified:
+        pass
+    await query.answer()
+
+
+# Jab koi "Home" button dabayega, toh help menu wapas start menu me edit ho jayega
+@app.on_callback_query(filters.regex("^help home$") & ~app.bl_users)
+@lang.language()
+async def home_menu_cb(_, query: types.CallbackQuery):
+    private = query.message.chat.type == enums.ChatType.PRIVATE
+    _text = (
+        query.lang["start_pm"].format(query.from_user.first_name, app.name)
+        if private
+        else query.lang["start_gp"].format(app.name)
+    )
+    try:
+        await query.message.edit_caption(
+            caption=_text,
+            reply_markup=buttons.start_key(query.lang, private)
+        )
+    except MessageNotModified:
+        pass
+    await query.answer()
+
+
+# Help Menu ke andar wale buttons (Admins, Play, Sudo, etc.) ko handle karne ke liye
+@app.on_callback_query(filters.regex(r"^help (.+)") & ~app.bl_users)
+@lang.language()
+async def help_submenu_cb(_, query: types.CallbackQuery):
+    module = query.matches[0].group(1)
+    
+    # Ye avoid karega ki "home" ya "close" commands isme process na ho jayein
+    if module in ["home", "close", "back"]: 
+        return
+        
+    try:
+        await query.message.edit_caption(
+            caption=query.lang[f"help_{module}"],
+            reply_markup=buttons.help_markup(query.lang, back=True)
+        )
+    except MessageNotModified:
+        pass
+    except Exception:
+        pass
+    await query.answer()
