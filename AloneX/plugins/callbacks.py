@@ -1,7 +1,7 @@
-# Copyright (c) 2025 TheHamkerAlone
+# Copyright (c) 2026 THE SHIV
 # Licensed under the MIT License.
-# This file is part of AloneXMusic
-
+# This file is part of MahiMusic
+# DEVELOPER - THE SHIV
 
 import re
 import asyncio
@@ -263,3 +263,22 @@ async def _autoplay_panel(_, query: types.CallbackQuery):
         )
         asyncio.create_task(_delete_later(msg))
         return
+
+# ==========================================
+# 🛑 GLOBAL CLOSE HANDLER (NEW)
+# ==========================================
+@app.on_callback_query(filters.regex("^(close|close_panel)$") & ~app.bl_users)
+async def global_close_cb(_, query: types.CallbackQuery):
+    try:
+        # Pura message delete karega
+        await query.message.delete()
+        # Agar ye command ke reply me aaya tha, toh command bhi delete karega
+        try:
+            await query.message.reply_to_message.delete()
+        except Exception:
+            pass
+    except Exception:
+        pass
+    
+    # Callback loader ghoomna band karega
+    await query.answer()
