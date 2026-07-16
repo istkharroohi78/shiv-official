@@ -1,4 +1,5 @@
 import random
+import re
 from pyrogram import enums, types
 from pyrogram.enums import ButtonStyle
 
@@ -32,10 +33,10 @@ class Inline:
         random.shuffle(styles)
         return styles
 
-    # 🎵 Custom Progress Bar Generator (Can be imported & used anywhere in your bot)
+    # 🎵 Custom Progress Bar Generator 
     def get_progress_bar(self, played_str: str, dur_str: str) -> str:
         played_sec = time_to_seconds(str(played_str))
-        if str(dur_str).lower() in ["live", "unknown", "0"]:
+        if str(dur_str).lower() in ["live", "unknown", "0", "00:00"]:
             duration_sec = 0
         else:
             duration_sec = time_to_seconds(str(dur_str))
@@ -48,13 +49,13 @@ class Inline:
             
         filled_blocks = min(max(filled_blocks, 0), total_blocks)
         
-        # Adding the music emoji logic
+        # Smooth progress bar with music note 🎵 leading the way
         if filled_blocks == 0:
             bar = "🎵" + "▱" * (total_blocks - 1)
         elif filled_blocks == total_blocks:
             bar = "▰" * (total_blocks - 1) + "🎵"
         else:
-            bar = "▰" * (filled_blocks - 1) + "🎵" + "▱" * (total_blocks - filled_blocks)
+            bar = "▰" * filled_blocks + "🎵" + "▱" * (total_blocks - filled_blocks - 1)
             
         return bar
 
@@ -122,13 +123,20 @@ class Inline:
                 [self.ikb(text=status, callback_data=f"controls status {chat_id}", style=style[0])]
             )
         elif timer:
-            # 🎵 Inject music emoji dynamically as the song progresses
-            if "▰▱" in timer:
-                timer = timer.replace("▰▱", "🎵▱", 1)
-            elif "▱" * 10 in timer:
-                timer = timer.replace("▱" * 10, "🎵" + "▱" * 9)
-            elif "▰" * 10 in timer:
-                timer = timer.replace("▰" * 10, "▰" * 9 + "🎵")
+            # 🎵 Forcefully inject the new progress bar using Regex
+            try:
+                times = re.findall(r'\d+:\d+(?::\d+)?', timer)
+                if len(times) == 2:
+                    played_str = times[0]
+                    dur_str = times[1]
+                    new_bar = self.get_progress_bar(played_str, dur_str)
+                    timer = f"{played_str} {new_bar} {dur_str}"
+                elif len(times) == 1 and "live" in timer.lower():
+                    played_str = times[0]
+                    new_bar = self.get_progress_bar(played_str, "0")
+                    timer = f"{played_str} {new_bar} Live"
+            except Exception:
+                pass
 
             keyboard.append(
                 [self.ikb(text=timer, callback_data=f"controls status {chat_id}", style=style[0])]
@@ -163,7 +171,7 @@ class Inline:
                     self.ikb(
                         text="➕ Add Me",
                         url=f"https://t.me/{app.username}?startgroup=true",
-                        style=style[0], # Loops back to 0 for a new color
+                        style=style[0],
                     ),
                     self.ikb(
                         text=_lang.get("close", "⌯ 𝐂ʟσsє ⌯"),
@@ -191,7 +199,6 @@ class Inline:
             cbs = ["admins", "auth", "blist", "lang", "ping", "play", "queue", "stats", "sudo", "autoplay", "vclogger"]
             rows = []
             
-            # Row-wise constant coloring for Help menu
             for i in range(0, len(cbs), 3):
                 row_cbs = cbs[i : i + 3]
                 row_style = style[(i // 3) % 3]
@@ -302,8 +309,11 @@ class Inline:
         if private:
             rows += [
                 [
-                    self.ikb(text="DEVELOPER - THE SHIV", url=config.OWNER_USERNAME, style=style[2]),
+                    self.ikb(text=lang["support"], url=config.SUPPORT_CHAT, style=style[2]),
                     self.ikb(text=lang["channel"], url=config.SUPPORT_CHANNEL, style=style[2]),
+                ],
+                [
+                    self.ikb(text="THE SHIV", url=config.OWNER_USERNAME, style=style[0]),
                 ]
             ]
         else:
