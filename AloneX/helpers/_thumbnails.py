@@ -7,4 +7,4 @@ from AloneX.helpers import Track
 class Thumbnail:
     async def generate(self, song: Track) -> str:
         # Har song ke liye directly aapki static image return karega
-        return "https://files.catbox.moe/3hf79f.png"
+        return "https://n.uguu.se/EBVPCnuG.jpg"
