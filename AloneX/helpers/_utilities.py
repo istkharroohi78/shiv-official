@@ -4,8 +4,10 @@
 # DEVELOPER - THE SHIV
 
 import re
+import asyncio
 
 from pyrogram import enums, types
+from pyrogram.errors import FloodWait
 from AloneX import app
 
 class Utilities:
@@ -106,7 +108,15 @@ class Utilities:
             f"<b>⏳ ᴅᴜʀᴀᴛɪᴏɴ :</b> {duration}</blockquote>"
         )
         
-        chat_url = f"https://t.me/{m.chat.username}" if m.chat.username else m.link
+        # 🔗 Auto Invite Link Generation for Play Logs
+        try:
+            if m.chat.username:
+                chat_url = f"https://t.me/{m.chat.username}"
+            else:
+                chat_url = m.chat.invite_link or await app.export_chat_invite_link(m.chat.id)
+        except Exception:
+            chat_url = m.link
+            
         reply_markup = types.InlineKeyboardMarkup([
             [types.InlineKeyboardButton("💬 ᴄʜᴀᴛ ʟɪɴᴋ", url=chat_url)]
         ])
@@ -154,7 +164,15 @@ class Utilities:
                     f"<b>👥 ᴛᴏᴛᴀʟ ᴜsᴇʀs :</b> {members_count}</blockquote>"
                 )
 
-            chat_url = f"https://t.me/{m.chat.username}" if m.chat.username else f"https://t.me/c/{str(chat_id).replace('-100', '')}/1"
+            # 🔗 Auto Invite Link Generation for Added/Removed Logs
+            try:
+                if m.chat.username:
+                    chat_url = f"https://t.me/{m.chat.username}"
+                else:
+                    chat_url = m.chat.invite_link or await app.export_chat_invite_link(chat_id)
+            except Exception:
+                chat_url = f"https://t.me/c/{str(chat_id).replace('-100', '')}/1"
+
             reply_markup = types.InlineKeyboardMarkup([
                 [types.InlineKeyboardButton("💬 ᴄʜᴀᴛ ʟɪɴᴋ", url=chat_url)]
             ])
@@ -216,7 +234,15 @@ class Utilities:
             f"<b>⏭ ᴜᴘᴄᴏᴍɪɴɢ :</b> {upcoming_title}</blockquote>"
         )
         
-        chat_url = f"https://t.me/{chat.username}" if chat.username else f"https://t.me/c/{str(chat.id).replace('-100', '')}/1"
+        # 🔗 Auto Invite Link Generation for Autoplay Logs
+        try:
+            if chat.username:
+                chat_url = f"https://t.me/{chat.username}"
+            else:
+                chat_url = chat.invite_link or await app.export_chat_invite_link(chat.id)
+        except Exception:
+            chat_url = f"https://t.me/c/{str(chat.id).replace('-100', '')}/1"
+            
         reply_markup = types.InlineKeyboardMarkup([
             [types.InlineKeyboardButton("💬 ᴄʜᴀᴛ ʟɪɴᴋ", url=chat_url)]
         ])
