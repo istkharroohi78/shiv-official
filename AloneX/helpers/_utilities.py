@@ -6,9 +6,7 @@
 import re
 
 from pyrogram import enums, types
-
 from AloneX import app
-
 
 class Utilities:
     def __init__(self):
@@ -113,13 +111,16 @@ class Utilities:
             [types.InlineKeyboardButton("💬 ᴄʜᴀᴛ ʟɪɴᴋ", url=chat_url)]
         ])
         
-        await app.send_message(
-            chat_id=app.logger, 
-            text=log_text,
-            reply_markup=reply_markup,
-            parse_mode=enums.ParseMode.HTML,
-            disable_web_page_preview=True
-        )
+        try:
+            await app.send_message(
+                chat_id=app.logger, 
+                text=log_text,
+                reply_markup=reply_markup,
+                parse_mode=enums.ParseMode.HTML,
+                disable_web_page_preview=True
+            )
+        except Exception as e:
+            print(f"⚠️ Play Log Error: {e}")
 
     async def send_log(self, m: types.Message, chat: bool = False, action: str = "added") -> None:
         if chat:
@@ -158,15 +159,21 @@ class Utilities:
                 [types.InlineKeyboardButton("💬 ᴄʜᴀᴛ ʟɪɴᴋ", url=chat_url)]
             ])
 
-            await app.send_photo(
-                chat_id=app.logger,
-                photo=log_image,
-                caption=log_text,
-                reply_markup=reply_markup,
-                parse_mode=enums.ParseMode.HTML
-            )
+            try:
+                await app.send_photo(
+                    chat_id=app.logger,
+                    photo=log_image,
+                    caption=log_text,
+                    reply_markup=reply_markup,
+                    parse_mode=enums.ParseMode.HTML
+                )
+            except Exception as e:
+                print(f"⚠️ Send Log (Photo) Error: {e}")
             
         else:
+            if not m.from_user:
+                return 
+
             log_text = (
                 "<blockquote><b>👤 ɴᴇᴡ ᴜsᴇʀ sᴛᴀʀᴛᴇᴅ</b>\n\n"
                 f"<b>🥀 ɴᴀᴍᴇ :</b> {m.from_user.mention}\n"
@@ -174,17 +181,20 @@ class Utilities:
                 f"<b>🔗 ᴜsᴇʀɴᴀᴍᴇ :</b> @{m.from_user.username or 'None'}</blockquote>"
             )
 
-            user_url = f"tg://openmessage?user_id={m.from_user.id}"
+            user_url = f"tg://user?id={m.from_user.id}"
             reply_markup = types.InlineKeyboardMarkup([
                 [types.InlineKeyboardButton("👤 ᴜsᴇʀ ᴘʀᴏꜰɪʟᴇ", url=user_url)]
             ])
 
-            await app.send_message(
-                chat_id=app.logger,
-                text=log_text,
-                reply_markup=reply_markup,
-                parse_mode=enums.ParseMode.HTML
-            )
+            try:
+                await app.send_message(
+                    chat_id=app.logger,
+                    text=log_text,
+                    reply_markup=reply_markup,
+                    parse_mode=enums.ParseMode.HTML
+                )
+            except Exception as e:
+                print(f"⚠️ Send Log (Message) Error: {e}")
 
     # 🟢 ADVANCED AUTOPLAY LOG FUNCTION
     async def autoplay_log(
@@ -206,16 +216,18 @@ class Utilities:
             f"<b>⏭ ᴜᴘᴄᴏᴍɪɴɢ :</b> {upcoming_title}</blockquote>"
         )
         
-        # Add Chat Link Button
         chat_url = f"https://t.me/{chat.username}" if chat.username else f"https://t.me/c/{str(chat.id).replace('-100', '')}/1"
         reply_markup = types.InlineKeyboardMarkup([
             [types.InlineKeyboardButton("💬 ᴄʜᴀᴛ ʟɪɴᴋ", url=chat_url)]
         ])
         
-        await app.send_message(
-            chat_id=app.logger,
-            text=log_text,
-            reply_markup=reply_markup,
-            parse_mode=enums.ParseMode.HTML,
-            disable_web_page_preview=True
-        )
+        try:
+            await app.send_message(
+                chat_id=app.logger,
+                text=log_text,
+                reply_markup=reply_markup,
+                parse_mode=enums.ParseMode.HTML,
+                disable_web_page_preview=True
+            )
+        except Exception as e:
+            print(f"⚠️ Autoplay Log Error: {e}")
