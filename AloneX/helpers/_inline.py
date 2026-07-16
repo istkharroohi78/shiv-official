@@ -5,6 +5,7 @@ from pyrogram.enums import ButtonStyle
 from AloneX import app, config, lang
 from AloneX.core.lang import lang_codes
 
+
 def time_to_seconds(time_str: str) -> int:
     """Helper function to convert time string to seconds"""
     try:
@@ -56,7 +57,6 @@ class Inline:
             bar = "▰" * (filled_blocks - 1) + "🎵" + "▱" * (total_blocks - filled_blocks)
             
         return bar
-
 
     def cancel_dl(self, text) -> types.InlineKeyboardMarkup:
         return self.ikm([[self.ikb(text=text, callback_data=f"cancel_dl")]])
@@ -173,7 +173,6 @@ class Inline:
                 ]
             )
         return self.ikm(keyboard)
-
 
     def help_markup(
         self, _lang: dict, back: bool = False
@@ -303,7 +302,7 @@ class Inline:
         if private:
             rows += [
                 [
-                    self.ikb(text=lang["SHIV"], url=config.OWNER_USERNAME, style=style[2]),
+                    self.ikb(text="DEVELOPER - THE SHIV", url=config.OWNER_USERNAME, style=style[2]),
                     self.ikb(text=lang["channel"], url=config.SUPPORT_CHANNEL, style=style[2]),
                 ]
             ]
