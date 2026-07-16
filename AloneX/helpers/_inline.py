@@ -95,7 +95,7 @@ class Inline:
                 [
                     self.ikb(
                         text="⌯ 𝐂ʟσsє ⌯",
-                        callback_data="autoplay_panel close",
+                        callback_data="close", # 🛠️ FIXED: Changed from "autoplay_panel close"
                         style=ButtonStyle.DANGER
                     )
                 ]
@@ -167,7 +167,7 @@ class Inline:
                     ),
                     self.ikb(
                         text=_lang.get("close", "⌯ 𝐂ʟσsє ⌯"),
-                        callback_data="help close",
+                        callback_data="close", # 🛠️ FIXED: Changed from "help close"
                         style=style[0],
                     ),
                 ]
@@ -184,7 +184,7 @@ class Inline:
                 [
                     self.ikb(text=_lang.get("back", "🔙 Back"), callback_data="help back", style=style[0]),
                     self.ikb(text=_lang.get("home_btn", "🏠 Home"), callback_data="help home", style=style[0]),
-                    self.ikb(text=_lang.get("close", "🗑 Close"), callback_data="help close", style=style[0]),
+                    self.ikb(text=_lang.get("close", "🗑 Close"), callback_data="close", style=style[0]), # 🛠️ FIXED
                 ]
             ]
         else:
@@ -216,7 +216,7 @@ class Inline:
             rows.append(
                 [
                     self.ikb(text=_lang.get("home_btn", "🏠 Home"), callback_data="help home", style=last_style),
-                    self.ikb(text=_lang.get("close", "🗑 Close"), callback_data="help close", style=last_style),
+                    self.ikb(text=_lang.get("close", "🗑 Close"), callback_data="close", style=last_style), # 🛠️ FIXED
                 ]
             )
 
