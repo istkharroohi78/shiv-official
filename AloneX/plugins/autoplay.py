@@ -141,8 +141,7 @@ async def autoplay_open_panel_cb(_, query: types.CallbackQuery):
     except AttributeError:
         enabled = False
 
-    banner = getattr(config, "AUTOPLAY_BANNER", getattr(config, "START_IMG", "https://files.catbox.moe/zvziwk.jpg"))
-
+    banner = getattr(config, "AUTOPLAY_BANNER", getattr(config, "START_IMG", "https://files.catbox.moe/etdhlr.jpg
     # Ek naya panel bhejo jisme saare naye controls honge
     await query.message.reply_photo(
         photo=banner,
