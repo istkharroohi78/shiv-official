@@ -1,5 +1,5 @@
 {
-    "name": "˹𝞚𝙡𝞸𝞰𝞮 ✗ 𝙈𝙪𝙨𝙞𝙘 ♪˼",
+    "name": "˹SHIV ✗ 𝙈𝙪𝙨𝙞𝙘 ♪˼",
     "description": "A Telegram Music Player Bot, written in Python with Pyrogram and Py-Tgcalls.",
     "logo": "https://litter.catbox.moe/xroqew.jpg",
     "keywords": ["python3", "telegram", "bot", "music-bot"],
@@ -22,22 +22,22 @@
         },
         "MONGO_URL": {
             "description": "Get a mongodb url from https://cloud.mongodb.com.",
-            "value": "mongodb+srv://Karma:Nothing0000@cluster0.ewjnsh1.mongodb.net/?appName=Cluster0",
+            "value": "",
             "required": true
         },
         "LOGGER_ID": {
             "description": "Your log group ID, add your bot there and promote as an admin.",
-            "value": "-1003809958673",
+            "value": "-1003812209413",
             "required": true
         },
         "OWNER_ID": {
             "description": "The user id of user whom you would like to add as OWNER.",
-            "value": "8213572855",
+            "value": "8418584090",
             "required": true
         },
         "SESSION": {
             "description": "A Pyrogram v2 String Session from @StringFatherBot on Telegram.",
-            "value": "AQFwyZ4AoGFg507Q3OtZdOJhzvuFxygRDwVcmpVOg85T1ZhMrLz58TKGfLCQhkUiNP9egqnlzXIQmf7IrdlVtcsQGj8phgc7Bdrk2BtV5M2q9tHKzfXMrLqX4ru0o7VY2LG0NzUF1tcw4DmqFiJCMkzGpv3GCqRwO-wV1TDJCkwG_EWThR1Tdx5C-RdR95e0emVjtpPEYFQcPWQgXu58ORG0-ftoodiA5JGxIjA1Tlk97FoXguQrlrZ_WHIDpVCsQzLs7E-ccmtqc0eCHQerKCN7jPUnhnDs2KhGSmCDA_ogBzxcejwGxfqq1pAZBQxvcg4CV5gv2nkHEiMk8UECJF4wxGb_swAAAAH8yF0jAA",
+            "value": "",
             "required": true
         }
     }
