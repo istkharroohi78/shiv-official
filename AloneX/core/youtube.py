@@ -171,7 +171,6 @@ class YouTube:
                         # Download complete hone ke baad hi final name set karega
                         os.rename(tmp_path, file_path)
 
-                    # ✅ Yahan par indentation fix kar di gayi hai
                     if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
                         return file_path
 
@@ -240,6 +239,7 @@ class YouTube:
             "retries": 1,
             "extractor_retries": 1,
             "extractor_args": {"youtube": {"player_client": ["android"]}},
+            "cookiefile": "cookies.txt",  # ✅ ADDED COOKIEFILE HERE
         }
         url = f"https://www.youtube.com/watch?v={video_id}&list=RD{video_id}"
         with yt_dlp.YoutubeDL(opts) as ydl:
