@@ -10,7 +10,6 @@ from AloneX.helpers import Track, utils
 API_URL = "https://teaminflex.xyz"
 DOWNLOAD_DIR = "downloads"
 
-
 class YouTube:
     def __init__(self):
         self.base = "https://www.youtube.com/watch?v="
@@ -19,10 +18,7 @@ class YouTube:
             r"(youtube\.com/(watch\?v=|shorts/|playlist\?list=)|youtu\.be/)"
             r"([A-Za-z0-9_-]{11}|PL[A-Za-z0-9_-]+)([&?][^\s]*)?"
         )
-        # ✅ Track ongoing downloads to prevent conflicts during pre-downloading
         self._dl_locks = {}
-
-    # ---------------- basic helpers ----------------
 
     def valid(self, url: str) -> bool:
         return bool(re.match(self.regex, url))
@@ -71,8 +67,6 @@ class YouTube:
             logger.error(f"Playlist error: {e}")
         return tracks
 
-    # ---------------- download (teaminflex.xyz API) ----------------
-
     async def download(self, video_id: str, video: bool = False) -> str | None:
         if not video_id or len(video_id) < 3:
             return None
@@ -81,11 +75,9 @@ class YouTube:
         ext = "mkv" if video else "webm"
         file_path = os.path.join(DOWNLOAD_DIR, f"{video_id}.{ext}")
 
-        # Agar pehle se downloaded hai toh instantly de dega
         if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
             return file_path
 
-        # ✅ Agar same file pre-download ho rahi hai, toh naya download start karne ke bajaye wait karega
         if video_id in self._dl_locks:
             await self._dl_locks[video_id].wait()
             if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
@@ -97,7 +89,7 @@ class YouTube:
 
         try:
             max_retries = 3
-            retry_delay = 1  # seconds, flat delay
+            retry_delay = 1 
             transient_statuses = {502, 503, 504}
 
             for attempt in range(1, max_retries + 1):
@@ -111,7 +103,6 @@ class YouTube:
                             "X-API-KEY": config.YOUTUBE_API_KEY
                         }
 
-                        # Step 1: Trigger API
                         async with session.post(f"{API_URL}/download", json=payload, headers=headers) as response:
                             if response.status == 401:
                                 logger.error("[API] Invalid API key")
@@ -147,7 +138,6 @@ class YouTube:
 
                             download_link = f"{API_URL}{data['download_url']}"
 
-                        # Step 2: Download file (.part extension so player doesn't grab corrupted file)
                         tmp_path = file_path + ".part"
                         async with session.get(download_link) as file_response:
                             if file_response.status in transient_statuses:
@@ -168,7 +158,6 @@ class YouTube:
                                 async for chunk in file_response.content.iter_chunked(8192):
                                     f.write(chunk)
                                     
-                        # Download complete hone ke baad hi final name set karega
                         os.rename(tmp_path, file_path)
 
                     if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
@@ -202,12 +191,9 @@ class YouTube:
 
             return None
 
-        # Finally block to ensure lock is always released
         finally:
             lock_event.set()
             self._dl_locks.pop(video_id, None)
-
-    # ---------------- autoplay helpers ----------------
 
     def _format_duration(self, seconds: int) -> str:
         seconds = max(int(seconds or 0), 0)
@@ -239,7 +225,8 @@ class YouTube:
             "retries": 1,
             "extractor_retries": 1,
             "extractor_args": {"youtube": {"player_client": ["android"]}},
-            "cookiefile": "cookies.txt",  # ✅ ADDED COOKIEFILE HERE
+            "cookiefile": "cookies.txt", 
+            "cachedir": False,  # ✅ CACHE DISABLED
         }
         url = f"https://www.youtube.com/watch?v={video_id}&list=RD{video_id}"
         with yt_dlp.YoutubeDL(opts) as ydl:
@@ -352,9 +339,9 @@ class YouTube:
             related = await self._related_from_search(current, played)
 
         if related:
-            # ✅ PRE-DOWNLOAD IN BACKGROUND: Jaise hi song fetch hoga, background me file download shuru ho jayegi
-            logger.info(f"[Autoplay] Pre-downloading next track: {related.title}")
-            asyncio.create_task(self.download(related.id, video=related.video))
+            # ✅ PRE-DOWNLOAD COMMENT KAR DIYA GAYA HAI (Crash rokne ke liye)
+            logger.info(f"[Autoplay] Found next track: {related.title}, pre-download skipped.")
+            # asyncio.create_task(self.download(related.id, video=related.video))
             return related
 
         logger.warning(f"[Autoplay] No related track found for {current.id}.")
