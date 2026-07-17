@@ -81,7 +81,7 @@ def get_random_button():
             [
                 InlineKeyboardButton(
                     "🎵 Aᴅᴅ ᴍᴇ ɪɴ ʏᴏᴜʀ ɢʀᴏᴜᴘ 🎧", 
-                    url=f"https://t.me/{app.username}?startgroup=true",
+                    url=f"https://t.me/royal_musics_bot?startgroup=true",
                     style=styles[0]
                 )
             ]
