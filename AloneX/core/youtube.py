@@ -171,36 +171,37 @@ class YouTube:
                         # Download complete hone ke baad hi final name set karega
                         os.rename(tmp_path, file_path)
 
-                if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
-                    return file_path
+                    # ✅ Yahan par indentation fix kar di gayi hai
+                    if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+                        return file_path
 
-                logger.warning(f"[API] downloaded file was empty/missing (attempt {attempt}/{max_retries}) for {video_id}")
-                if os.path.exists(file_path):
-                    try: os.remove(file_path)
-                    except: pass
-                if attempt < max_retries:
-                    await asyncio.sleep(retry_delay)
-                    continue
-                return None
+                    logger.warning(f"[API] downloaded file was empty/missing (attempt {attempt}/{max_retries}) for {video_id}")
+                    if os.path.exists(file_path):
+                        try: os.remove(file_path)
+                        except: pass
+                    if attempt < max_retries:
+                        await asyncio.sleep(retry_delay)
+                        continue
+                    return None
 
-            except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-                logger.warning(f"[API] network error (attempt {attempt}/{max_retries}) for {video_id}: {e}")
-                if os.path.exists(file_path + ".part"):
-                    try: os.remove(file_path + ".part")
-                    except: pass
-                if attempt < max_retries:
-                    await asyncio.sleep(retry_delay)
-                    continue
-                return None
+                except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+                    logger.warning(f"[API] network error (attempt {attempt}/{max_retries}) for {video_id}: {e}")
+                    if os.path.exists(file_path + ".part"):
+                        try: os.remove(file_path + ".part")
+                        except: pass
+                    if attempt < max_retries:
+                        await asyncio.sleep(retry_delay)
+                        continue
+                    return None
 
-            except Exception as e:
-                logger.error(f"Download exception for ID {video_id} (attempt {attempt}/{max_retries}): {e}")
-                if attempt < max_retries:
-                    await asyncio.sleep(retry_delay)
-                    continue
-                return None
+                except Exception as e:
+                    logger.error(f"Download exception for ID {video_id} (attempt {attempt}/{max_retries}): {e}")
+                    if attempt < max_retries:
+                        await asyncio.sleep(retry_delay)
+                        continue
+                    return None
 
-        return None
+            return None
 
         # Finally block to ensure lock is always released
         finally:
