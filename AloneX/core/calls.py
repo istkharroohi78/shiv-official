@@ -43,8 +43,9 @@ class TgCall(PyTgCalls):
                 q = queue.get(chat_id)
                 if q and isinstance(q, list) and len(q) > 1:
                     next_track = q[1]
-                    if not next_track.file_path:
-                        next_track.file_path = await yt.download(next_track.id, video=next_track.video)
+                    # ✅ MEMORY FIX: Removed background downloading
+                    # if not next_track.file_path:
+                    #     next_track.file_path = await yt.download(next_track.id, video=next_track.video)
                     return 
             except Exception:
                 pass
@@ -54,7 +55,8 @@ class TgCall(PyTgCalls):
                 if current and isinstance(current, Track):
                     related = await yt.get_related(current, self.history[chat_id])
                     if related:
-                        related.file_path = await yt.download(related.id, video=related.video)
+                        # ✅ MEMORY FIX: Removed background downloading for autoplay
+                        # related.file_path = await yt.download(related.id, video=related.video)
                         self.pending_autoplay[chat_id] = related
         except Exception:
             pass
@@ -124,7 +126,7 @@ class TgCall(PyTgCalls):
                     active_msg = await message.edit_media(media=InputMediaPhoto(media=_thumb, caption=text), reply_markup=keyboard)
                 except MessageIdInvalid:
                     active_msg = await app.send_photo(chat_id=chat_id, photo=_thumb, caption=text, reply_markup=keyboard)
-                    media.message_id = active_msg.id
+                media.message_id = active_msg.id
                 
                 asyncio.create_task(self._prefetch_next(chat_id))
 
@@ -253,4 +255,3 @@ class TgCall(PyTgCalls):
             self.clients.append(client)
             await self.decorators(client)
         logger.info("PyTgCalls client(s) started.")
-                      
