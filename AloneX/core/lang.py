@@ -11,22 +11,23 @@ from pyrogram import errors
 
 from AloneX import db, logger
 
-# Includes existing international languages + 22 Official Indian Languages
+# Includes existing international languages, neighboring countries + 22 Official Indian Languages
 lang_codes = {
-    # International Languages
-    "ar": "Arabic",
+    # International & Regional Languages
+    "ar": "Arabic (Saudi Arabia)",
     "de": "German",
     "en": "English",
     "es": "Spanish",
     "fr": "French",
     "ja": "Japanese",
+    "my": "Burmese (Myanmar)",
     "pt": "Portuguese",
     "ru": "Russian",
     "zh": "Chinese",
     
-    # 22 Official Indian Languages (Eighth Schedule)
+    # 22 Official Indian Languages (Eighth Schedule) & Neighbors
     "as": "Assamese",
-    "bn": "Bengali",
+    "bn": "Bengali (Bangladesh/India)",
     "brx": "Bodo",
     "doi": "Dogri",
     "gu": "Gujarati",
