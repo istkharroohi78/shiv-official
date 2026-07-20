@@ -6,6 +6,7 @@ import os
 import time
 import asyncio
 import random
+import bson
 from pyrogram import errors, filters, types
 from pyrogram.enums import ChatMembersFilter
 from pyrogram.errors import FloodWait
@@ -66,6 +67,41 @@ async def delete_promo_record(chat_id: int, message_id: int):
 # Auto Delete Helper for Regular Broadcasts
 async def save_gcast_msg(chat_id: int, message_id: int):
     await gcast_msgs_db.insert_one({"chat_id": chat_id, "message_id": message_id, "timestamp": int(time.time())})
+
+# ==========================================
+# PERMANENT DATABASE FIXER COMMAND
+# ==========================================
+@app.on_message(filters.command("fixdb") & app.sudoers)
+async def fix_database_corruption(client, message):
+    msg = await message.reply("🛠 **Scanning Database to permanently delete corrupted ObjectIds...**")
+    try:
+        databases = await dbclient.list_database_names()
+        deleted_count = 0
+        
+        for db_name in databases:
+            if db_name in ["admin", "local", "config"]:
+                continue
+            database = dbclient[db_name]
+            collections = await database.list_collection_names()
+            
+            for col_name in collections:
+                # We only want to clean user and chat collections where ID must be integer
+                if col_name in ["users", "usersdb", "chats", "chatsdb", "served_users", "served_chats"]:
+                    collection = database[col_name]
+                    
+                    async for doc in collection.find():
+                        doc_id = doc.get("_id")
+                        user_id = doc.get("user_id")
+                        chat_id = doc.get("chat_id")
+                        
+                        # If any ID is an ObjectId instead of Integer, it's corrupted and must be deleted
+                        if isinstance(doc_id, bson.objectid.ObjectId) or isinstance(user_id, bson.objectid.ObjectId) or isinstance(chat_id, bson.objectid.ObjectId):
+                            await collection.delete_one({"_id": doc_id})
+                            deleted_count += 1
+                            
+        await msg.edit_text(f"✅ **Database Fixed Successfully!**\n\n🗑 **Deleted {deleted_count} corrupted entries.**\n\nAb aap apna original `/broadcast` run karein, error hamesha ke liye solve ho chuka hai.")
+    except Exception as e:
+        await msg.edit_text(f"❌ Error: {e}")
 
 # ==========================================
 # SELF PROMO ASSETS
@@ -169,7 +205,6 @@ async def _broadcast(_, message: types.Message):
     completed = 0
 
     async def update_progress():
-        # Update progress bar every 20 messages to prevent FloodWait limit on edits
         if completed % 20 == 0 or completed == total_targets:
             bar = get_progress_bar(completed, total_targets)
             percent = int((completed / total_targets) * 100)
@@ -191,7 +226,9 @@ async def _broadcast(_, message: types.Message):
         for user in users:
             if not IS_BROADCASTING:
                 break
+            # Original Strict Logic - Will not fail after /fixdb is run
             user_id = int(user["user_id"] if isinstance(user, dict) else user)
+            
             try:
                 m = (
                     await app.forward_messages(user_id, y, x)
@@ -215,7 +252,6 @@ async def _broadcast(_, message: types.Message):
                 except:
                     u_failed += 1
             except Exception:
-                # Silently catch PEER_ID_INVALID and blocked errors
                 u_failed += 1
 
             completed += 1
@@ -227,7 +263,9 @@ async def _broadcast(_, message: types.Message):
         for chat in chats:
             if not IS_BROADCASTING:
                 break
+            # Original Strict Logic
             chat_id = int(chat["chat_id"] if isinstance(chat, dict) else chat)
+            
             try:
                 m = (
                     await app.forward_messages(chat_id, y, x)
@@ -263,7 +301,6 @@ async def _broadcast(_, message: types.Message):
                 except:
                     g_failed += 1
             except Exception:
-                 # Silently catch PEER_ID_INVALID and chat write forbidden errors
                 g_failed += 1
 
             completed += 1
@@ -339,7 +376,7 @@ async def run_promo_broadcast(status_message=None):
     completed = 0
 
     async def update_progress():
-        if status_message and completed % 20 == 0:  # Update message every 20 sends
+        if status_message and completed % 20 == 0:  
             bar = get_progress_bar(completed, total_targets)
             percent = int((completed / total_targets) * 100) if total_targets else 100
             text = (
@@ -354,6 +391,7 @@ async def run_promo_broadcast(status_message=None):
                 pass
 
     for user in users:
+        # Original Strict Logic
         user_id = user["user_id"] if isinstance(user, dict) else user
         try:
             msg = await app.send_photo(
@@ -374,6 +412,7 @@ async def run_promo_broadcast(status_message=None):
         await asyncio.sleep(0.5)
 
     for chat in chats:
+        # Original Strict Logic
         chat_id = chat["chat_id"] if isinstance(chat, dict) else chat
         try:
             msg = await app.send_photo(
