@@ -1,3 +1,8 @@
+# Copyright (c) 2026 THE SHIV
+# Licensed under the MIT License.
+# This file is part of MahiMusic
+# the shiv
+
 import os
 import re
 import asyncio
@@ -80,17 +85,22 @@ class YouTube:
 
         if video_id in self._dl_locks:
             await self._dl_locks[video_id].wait()
-            if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
-                return file_path
+            for file_name in os.listdir(DOWNLOAD_DIR):
+                if file_name.startswith(video_id) and os.path.getsize(os.path.join(DOWNLOAD_DIR, file_name)) > 0:
+                    return os.path.join(DOWNLOAD_DIR, file_name)
             return None
 
         lock_event = asyncio.Event()
         self._dl_locks[video_id] = lock_event
 
         try:
+            # ==============================
+            # STEP 1: DOWNLOAD VIA API FIRST
+            # ==============================
             max_retries = 3
             retry_delay = 1 
             transient_statuses = {502, 503, 504}
+            api_success = False
 
             for attempt in range(1, max_retries + 1):
                 try:
@@ -106,19 +116,18 @@ class YouTube:
                         async with session.post(f"{API_URL}/download", json=payload, headers=headers) as response:
                             if response.status == 401:
                                 logger.error("[API] Invalid API key")
-                                return None
+                                break
 
                             if response.status in transient_statuses:
                                 logger.warning(f"[API] returned {response.status} (attempt {attempt}/{max_retries}) for {video_id}")
                                 if attempt < max_retries:
                                     await asyncio.sleep(retry_delay)
                                     continue
-                                logger.error(f"[API] gave up after {max_retries} attempts for {video_id}")
-                                return None
+                                break
 
                             if response.status != 200:
                                 logger.error(f"[API] returned {response.status}")
-                                return None
+                                break
 
                             try:
                                 data = await response.json()
@@ -127,14 +136,14 @@ class YouTube:
                                 if attempt < max_retries:
                                     await asyncio.sleep(retry_delay)
                                     continue
-                                return None
+                                break
 
                             if data.get("status") != "success" or not data.get("download_url"):
                                 logger.error(f"[API] response error: {data}")
                                 if attempt < max_retries:
                                     await asyncio.sleep(retry_delay)
                                     continue
-                                return None
+                                break
 
                             download_link = f"{API_URL}{data['download_url']}"
 
@@ -145,14 +154,14 @@ class YouTube:
                                 if attempt < max_retries:
                                     await asyncio.sleep(retry_delay)
                                     continue
-                                return None
+                                break
 
                             if file_response.status != 200:
                                 logger.error(f"[API] Download failed ({file_response.status})")
                                 if attempt < max_retries:
                                     await asyncio.sleep(retry_delay)
                                     continue
-                                return None
+                                break
 
                             with open(tmp_path, "wb") as f:
                                 async for chunk in file_response.content.iter_chunked(8192):
@@ -161,6 +170,7 @@ class YouTube:
                         os.rename(tmp_path, file_path)
 
                     if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+                        api_success = True
                         return file_path
 
                     logger.warning(f"[API] downloaded file was empty/missing (attempt {attempt}/{max_retries}) for {video_id}")
@@ -170,7 +180,6 @@ class YouTube:
                     if attempt < max_retries:
                         await asyncio.sleep(retry_delay)
                         continue
-                    return None
 
                 except (aiohttp.ClientError, asyncio.TimeoutError) as e:
                     logger.warning(f"[API] network error (attempt {attempt}/{max_retries}) for {video_id}: {e}")
@@ -180,13 +189,38 @@ class YouTube:
                     if attempt < max_retries:
                         await asyncio.sleep(retry_delay)
                         continue
-                    return None
 
                 except Exception as e:
                     logger.error(f"Download exception for ID {video_id} (attempt {attempt}/{max_retries}): {e}")
                     if attempt < max_retries:
                         await asyncio.sleep(retry_delay)
                         continue
+
+            # ===============================================
+            # STEP 2: FALLBACK TO YT-DLP WITHOUT COOKIES
+            # ===============================================
+            if not api_success:
+                logger.info(f"[Download] API failed for {video_id}. Falling back to yt-dlp...")
+                
+                ydl_opts = {
+                    "format": "bestvideo+bestaudio/best" if video else "bestaudio/best",
+                    "outtmpl": f"{DOWNLOAD_DIR}/%(id)s.%(ext)s",
+                    "geo_bypass": True,
+                    "nocheckcertificate": True,
+                    # Cookies disabled completely, terminal logs will show up.
+                }
+
+                def _download_yt():
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=True)
+                        return ydl.prepare_filename(info)
+
+                try:
+                    fallback_path = await asyncio.get_event_loop().run_in_executor(None, _download_yt)
+                    if fallback_path and os.path.exists(fallback_path) and os.path.getsize(fallback_path) > 0:
+                        return fallback_path
+                except Exception as e:
+                    logger.error(f"[yt-dlp Fallback] Download failed for {video_id}: {e}")
                     return None
 
             return None
@@ -215,8 +249,6 @@ class YouTube:
 
     def _extract_related(self, video_id: str) -> dict | None:
         opts = {
-            "quiet": True,
-            "no_warnings": True,
             "extract_flat": "in_playlist",
             "skip_download": True,
             "ignoreerrors": True,
@@ -225,7 +257,8 @@ class YouTube:
             "retries": 1,
             "extractor_retries": 1,
             "extractor_args": {"youtube": {"player_client": ["android"]}},
-            "cachedir": False,  # ✅ CACHE DISABLED AND COOKIEFILE REMOVED
+            "cachedir": False,
+            # Cookies disabled completely here too, terminal logs will show up.
         }
         url = f"https://www.youtube.com/watch?v={video_id}&list=RD{video_id}"
         with yt_dlp.YoutubeDL(opts) as ydl:
@@ -338,9 +371,7 @@ class YouTube:
             related = await self._related_from_search(current, played)
 
         if related:
-            # ✅ PRE-DOWNLOAD COMMENT KAR DIYA GAYA HAI (Crash rokne ke liye)
-            logger.info(f"[Autoplay] Found next track: {related.title}, pre-download skipped.")
-            # asyncio.create_task(self.download(related.id, video=related.video))
+            logger.info(f"[Autoplay] Found next track: {related.title}")
             return related
 
         logger.warning(f"[Autoplay] No related track found for {current.id}.")
