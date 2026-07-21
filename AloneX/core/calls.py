@@ -43,9 +43,9 @@ class TgCall(PyTgCalls):
                 q = queue.get(chat_id)
                 if q and isinstance(q, list) and len(q) > 1:
                     next_track = q[1]
-                    # ✅ MEMORY FIX: Removed background downloading
-                    # if not next_track.file_path:
-                    #     next_track.file_path = await yt.download(next_track.id, video=next_track.video)
+                    # ✅ BACKGROUND DOWNLOADING ENABLED FOR QUEUED TRACK
+                    if not next_track.file_path:
+                        next_track.file_path = await yt.download(next_track.id, video=next_track.video)
                     return 
             except Exception:
                 pass
@@ -55,11 +55,14 @@ class TgCall(PyTgCalls):
                 if current and isinstance(current, Track):
                     related = await yt.get_related(current, self.history[chat_id])
                     if related:
-                        # ✅ MEMORY FIX: Removed background downloading for autoplay
-                        # related.file_path = await yt.download(related.id, video=related.video)
+                        # ✅ BACKGROUND DOWNLOADING ENABLED FOR AUTOPLAY
+                        related.file_path = await yt.download(related.id, video=related.video)
                         self.pending_autoplay[chat_id] = related
         except Exception:
             pass
+        finally:
+            # Safely remove from prefetching to avoid permanent locks
+            self.autoplay_prefetching.discard(chat_id)
 
     async def pause(self, chat_id: int) -> bool:
         client = await db.get_assistant(chat_id)
@@ -150,6 +153,9 @@ class TgCall(PyTgCalls):
                 if not related:
                     try:
                         related = await yt.get_related(current, self.history[chat_id])
+                        if related:
+                            # Pre-download just in case it wasn't fetched in the background
+                            related.file_path = await yt.download(related.id, video=related.video)
                     except Exception:
                         related = None
 
@@ -172,7 +178,7 @@ class TgCall(PyTgCalls):
                     notice = await app.send_message(chat_id=chat_id, text=f"<blockquote>▶️ <b>Aᴜᴛᴏᴘʟᴀʏ Nᴇxᴛ :</b>\n🎧 <a href='{media.url}'><i>{short_title}</i></a></blockquote>", disable_web_page_preview=True)
                     asyncio.create_task(_delete_msg(notice, 6))
 
-                    # 2. LOGGER GROUP ME DETAILED LOG (As per your Screenshot)
+                    # 2. LOGGER GROUP ME DETAILED LOG
                     try:
                         chat_info = await app.get_chat(chat_id)
                         chat_title = chat_info.title
