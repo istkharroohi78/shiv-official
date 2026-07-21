@@ -225,8 +225,7 @@ class YouTube:
             "retries": 1,
             "extractor_retries": 1,
             "extractor_args": {"youtube": {"player_client": ["android"]}},
-            "cookiefile": "cookies.txt", 
-            "cachedir": False,  # ✅ CACHE DISABLED
+            "cachedir": False,  # ✅ CACHE DISABLED AND COOKIEFILE REMOVED
         }
         url = f"https://www.youtube.com/watch?v={video_id}&list=RD{video_id}"
         with yt_dlp.YoutubeDL(opts) as ydl:
